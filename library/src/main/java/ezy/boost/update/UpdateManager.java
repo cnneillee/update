@@ -152,7 +152,7 @@ public class UpdateManager {
             }
             sLastTime = now;
 
-            if (TextUtils.isEmpty(mUrl)) {
+            if (!TextUtils.isEmpty(mUrl)) {
                 mUrl = UpdateUtil.toCheckUrl(mContext, sUrl, sChannel);
             }
 
