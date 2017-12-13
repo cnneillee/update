@@ -22,7 +22,6 @@ import android.app.NotificationManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.os.AsyncTask;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.NotificationCompat;
 import android.text.format.Formatter;
@@ -48,6 +47,8 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
     private IUpdateChecker mChecker;
     private IUpdateDownloader mDownloader;
     private IUpdatePrompter mPrompter;
+
+    private OnCheckListener mOnCheckListener;
 
     private OnFailureListener mOnFailureListener;
 
@@ -194,23 +195,34 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
     }
 
 
-
     void doCheck() {
-        new AsyncTask<String, Void, Void>() {
-            @Override
-            protected Void doInBackground(String... params) {
-                if (mChecker == null) {
-                    mChecker = new UpdateChecker();
+        if (mOnCheckListener == null) {
+            mOnCheckListener = new OnCheckListener() {
+                @Override
+                public void onSuccess(String source) {
+                    setInfo(source);
+                    doCheckFinish();
                 }
-                mChecker.check(UpdateAgent.this, mUrl);
-                return null;
-            }
 
-            @Override
-            protected void onPostExecute(Void aVoid) {
-                doCheckFinish();
-            }
-        }.execute();
+                @Override
+                public void onError(UpdateError error) {
+                    setError(error);
+                    doCheckFinish();
+                }
+
+                @Override
+                public void onFinish(UpdateInfo info) {
+                    setInfo(info);
+                    doCheckFinish();
+                }
+            };
+        }
+
+        if (mChecker == null) {
+            mChecker = new UpdateChecker();
+        }
+
+        mChecker.check(mUrl, mOnCheckListener);
     }
 
     void doCheckFinish() {

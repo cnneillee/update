@@ -16,6 +16,8 @@
 
 package ezy.boost.update;
 
+import android.os.AsyncTask;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -27,12 +29,28 @@ public class UpdateChecker implements IUpdateChecker {
     public UpdateChecker() {
         mPostData = null;
     }
+
     public UpdateChecker(byte[] data) {
         mPostData = data;
     }
 
     @Override
-    public void check(ICheckAgent agent, String url) {
+    public void check(final String url, final OnCheckListener listener) {
+        new AsyncTask<String, Void, Void>() {
+            @Override
+            protected Void doInBackground(String... params) {
+                doCheck(url, listener);
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(Void aVoid) {
+                listener.onFinish(null);
+            }
+        }.execute();
+    }
+
+    private void doCheck(String url, OnCheckListener listener) {
         HttpURLConnection connection = null;
         try {
             connection = (HttpURLConnection) new URL(url).openConnection();
@@ -52,13 +70,13 @@ public class UpdateChecker implements IUpdateChecker {
             }
 
             if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                agent.setInfo(UpdateUtil.readString(connection.getInputStream()));
+                listener.onSuccess(UpdateUtil.readString(connection.getInputStream()));
             } else {
-                agent.setError(new UpdateError(UpdateError.CHECK_HTTP_STATUS, "" + connection.getResponseCode()));
+                listener.onError(new UpdateError(UpdateError.CHECK_HTTP_STATUS, "" + connection.getResponseCode()));
             }
         } catch (IOException e) {
             e.printStackTrace();
-            agent.setError(new UpdateError(UpdateError.CHECK_NETWORK_IO));
+            listener.onError(new UpdateError(UpdateError.CHECK_NETWORK_IO));
         } finally {
             if (connection != null) {
                 connection.disconnect();

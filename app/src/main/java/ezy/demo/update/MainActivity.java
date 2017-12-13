@@ -22,9 +22,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-import ezy.boost.update.ICheckAgent;
 import ezy.boost.update.IUpdateChecker;
 import ezy.boost.update.IUpdateParser;
+import ezy.boost.update.OnCheckListener;
 import ezy.boost.update.UpdateInfo;
 import ezy.boost.update.UpdateManager;
 import ezy.boost.update.UpdateUtil;
@@ -60,9 +60,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             notifyId) {
         UpdateManager.create(this).setChecker(new IUpdateChecker() {
             @Override
-            public void check(ICheckAgent agent, String url) {
+            public void check(String url, OnCheckListener listener) {
                 Log.e("ezy.update", "checking");
-                agent.setInfo("");
+                listener.onSuccess("");
             }
         }).setUrl(mCheckUrl).setManual(isManual).setNotifyId(notifyId).setParser(new IUpdateParser() {
             @Override

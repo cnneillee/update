@@ -17,5 +17,5 @@
 package ezy.boost.update;
 
 public interface IUpdateChecker {
-    void check(ICheckAgent agent, String url);
+    void check(String url, OnCheckListener listener);
 }
