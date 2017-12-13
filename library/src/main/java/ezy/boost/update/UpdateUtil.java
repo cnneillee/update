@@ -142,11 +142,11 @@ public class UpdateUtil {
         if (TextUtils.isEmpty(_md5)) {
             return false;
         }
-        boolean result = _md5 != null && _md5.equalsIgnoreCase(md5);
+        boolean result = _md5.equalsIgnoreCase(md5);
         if (!result) {
             apk.delete();
         }
-        return result;
+        return result || isIgnorable;
     }
 
 
