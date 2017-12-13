@@ -19,5 +19,7 @@ package ezy.boost.update;
 public interface ICheckAgent {
     void setInfo(String info);
 
+    void setInfo(UpdateInfo info);
+
     void setError(UpdateError error);
 }

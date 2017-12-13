@@ -26,6 +26,9 @@ public class UpdateChecker implements IUpdateChecker {
 
     final byte[] mPostData;
 
+    private String mInfo;
+    private UpdateError mError;
+
     public UpdateChecker() {
         mPostData = null;
     }
@@ -35,22 +38,26 @@ public class UpdateChecker implements IUpdateChecker {
     }
 
     @Override
-    public void check(final String url, final OnCheckListener listener) {
+    public void check(final String url, final ICheckAgent agent) {
         new AsyncTask<String, Void, Void>() {
             @Override
             protected Void doInBackground(String... params) {
-                doCheck(url, listener);
+                doCheck(url);
                 return null;
             }
 
             @Override
             protected void onPostExecute(Void aVoid) {
-                listener.onFinish(null);
+                if (mError != null) {
+                    agent.setError(mError);
+                }else{
+                    agent.setInfo(mInfo);
+                }
             }
         }.execute();
     }
 
-    private void doCheck(String url, OnCheckListener listener) {
+    private void doCheck(String url) {
         HttpURLConnection connection = null;
         try {
             connection = (HttpURLConnection) new URL(url).openConnection();
@@ -70,13 +77,13 @@ public class UpdateChecker implements IUpdateChecker {
             }
 
             if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
-                listener.onSuccess(UpdateUtil.readString(connection.getInputStream()));
+                mInfo = UpdateUtil.readString(connection.getInputStream());
             } else {
-                listener.onError(new UpdateError(UpdateError.CHECK_HTTP_STATUS, "" + connection.getResponseCode()));
+                mError = new UpdateError(UpdateError.CHECK_HTTP_STATUS, "" + connection.getResponseCode());
             }
         } catch (IOException e) {
             e.printStackTrace();
-            listener.onError(new UpdateError(UpdateError.CHECK_NETWORK_IO));
+            mError = new UpdateError(UpdateError.CHECK_NETWORK_IO);
         } finally {
             if (connection != null) {
                 connection.disconnect();

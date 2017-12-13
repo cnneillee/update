@@ -48,8 +48,6 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
     private IUpdateDownloader mDownloader;
     private IUpdatePrompter mPrompter;
 
-    private OnCheckListener mOnCheckListener;
-
     private OnFailureListener mOnFailureListener;
 
     private OnDownloadListener mOnDownloadListener;
@@ -100,11 +98,6 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
         mOnFailureListener = listener;
     }
 
-
-    public void setInfo(UpdateInfo info) {
-        mInfo = info;
-    }
-
     @Override
     public UpdateInfo getInfo() {
         return mInfo;
@@ -114,6 +107,7 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
     public void setInfo(String source) {
         try {
             mInfo = mParser.parse(source);
+            setInfo(mInfo);
         } catch (Exception e) {
             e.printStackTrace();
             setError(new UpdateError(UpdateError.CHECK_PARSE));
@@ -121,8 +115,15 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
     }
 
     @Override
+    public void setInfo(UpdateInfo info) {
+        mInfo = info;
+        doCheckFinish();
+    }
+
+    @Override
     public void setError(UpdateError error) {
         mError = error;
+        doCheckFinish();
     }
 
     @Override
@@ -196,33 +197,11 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
 
 
     void doCheck() {
-        if (mOnCheckListener == null) {
-            mOnCheckListener = new OnCheckListener() {
-                @Override
-                public void onSuccess(String source) {
-                    setInfo(source);
-                    doCheckFinish();
-                }
-
-                @Override
-                public void onError(UpdateError error) {
-                    setError(error);
-                    doCheckFinish();
-                }
-
-                @Override
-                public void onFinish(UpdateInfo info) {
-                    setInfo(info);
-                    doCheckFinish();
-                }
-            };
-        }
-
         if (mChecker == null) {
             mChecker = new UpdateChecker();
         }
 
-        mChecker.check(mUrl, mOnCheckListener);
+        mChecker.check(mUrl, this);
     }
 
     void doCheckFinish() {
@@ -254,7 +233,6 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
                 }
             }
         }
-
     }
 
     void doPrompt() {
