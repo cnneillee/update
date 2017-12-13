@@ -129,7 +129,7 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
     @Override
     public void update() {
         mApkFile = new File(mContext.getExternalCacheDir(), mInfo.md5 + ".apk");
-        if (UpdateUtil.verify(mApkFile, mInfo.md5)) {
+        if (UpdateUtil.verify(mApkFile, mInfo.md5, mInfo.isMD5Ignorable)) {
             doInstall();
         } else {
             doDownload();
@@ -224,7 +224,7 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
                 mTmpFile = new File(mContext.getExternalCacheDir(), info.md5);
                 mApkFile = new File(mContext.getExternalCacheDir(), info.md5 + ".apk");
 
-                if (UpdateUtil.verify(mApkFile, mInfo.md5)) {
+                if (UpdateUtil.verify(mApkFile, mInfo.md5, mInfo.isMD5Ignorable)) {
                     doInstall();
                 } else if (info.isSilent) {
                     doDownload();

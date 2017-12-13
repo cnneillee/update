@@ -82,7 +82,7 @@ class UpdateDownloader extends AsyncTask<Void, Integer, Long> {
                 mError = new UpdateError(UpdateError.DOWNLOAD_CANCELLED);
             } else if (result == -1) {
                 mError = new UpdateError(UpdateError.DOWNLOAD_UNKNOWN);
-            } else if (!UpdateUtil.verify(mTemp, mTemp.getName())) {
+            } else if (!UpdateUtil.verify(mTemp, mTemp.getName(), false)) {
                 mError = new UpdateError(UpdateError.DOWNLOAD_VERIFY);
             }
         } catch (UpdateError e) {

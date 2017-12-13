@@ -109,7 +109,7 @@ public class UpdateUtil {
     public static void install(Context context, boolean force) {
         String md5 = context.getSharedPreferences(PREFS, 0).getString(KEY_UPDATE, "");
         File apk = new File(context.getExternalCacheDir(), md5 + ".apk");
-        if (UpdateUtil.verify(apk, md5)) {
+        if (UpdateUtil.verify(apk, md5, false)) {
             install(context, apk, force);
         }
     }
@@ -130,7 +130,11 @@ public class UpdateUtil {
         }
     }
 
-    public static boolean verify(File apk, String md5) {
+    public static boolean verify(File apk, String md5, boolean isIgnorable) {
+        if (isIgnorable) {
+            return true;
+        }
+
         if (!apk.exists()) {
             return false;
         }

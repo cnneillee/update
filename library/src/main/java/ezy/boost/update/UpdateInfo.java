@@ -33,6 +33,8 @@ public class UpdateInfo {
     // 一天内最大提示次数，<1时不限
     public int maxTimes = 0;
 
+    public boolean isMD5Ignorable = true;
+
     public int versionCode;
     public String versionName;
 
