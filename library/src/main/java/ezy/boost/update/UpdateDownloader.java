@@ -55,6 +55,8 @@ class UpdateDownloader extends AsyncTask<Void, Integer, Long> {
 
     private HttpURLConnection mConnection;
 
+    private UpdateError mError;
+
     public UpdateDownloader(IDownloadAgent agent, Context context, String url, File file) {
         super();
         mContext = context;
@@ -77,20 +79,20 @@ class UpdateDownloader extends AsyncTask<Void, Integer, Long> {
         try {
             long result = download();
             if (isCancelled()) {
-                mAgent.setError(new UpdateError(UpdateError.DOWNLOAD_CANCELLED));
+                mError = new UpdateError(UpdateError.DOWNLOAD_CANCELLED);
             } else if (result == -1) {
-                mAgent.setError(new UpdateError(UpdateError.DOWNLOAD_UNKNOWN));
+                mError = new UpdateError(UpdateError.DOWNLOAD_UNKNOWN);
             } else if (!UpdateUtil.verify(mTemp, mTemp.getName())) {
-                mAgent.setError(new UpdateError(UpdateError.DOWNLOAD_VERIFY));
+                mError = new UpdateError(UpdateError.DOWNLOAD_VERIFY);
             }
         } catch (UpdateError e) {
-            mAgent.setError(e);
+            mError = e;
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            mAgent.setError(new UpdateError(UpdateError.DOWNLOAD_DISK_IO));
+            mError = new UpdateError(UpdateError.DOWNLOAD_DISK_IO);
         } catch (IOException e) {
             e.printStackTrace();
-            mAgent.setError(new UpdateError(UpdateError.DOWNLOAD_NETWORK_IO));
+            mError = new UpdateError(UpdateError.DOWNLOAD_NETWORK_IO);
         } finally {
             if (mConnection != null) {
                 mConnection.disconnect();
@@ -121,6 +123,9 @@ class UpdateDownloader extends AsyncTask<Void, Integer, Long> {
 
     @Override
     protected void onPostExecute(Long result) {
+        if (mError != null){
+            mAgent.setError(mError);
+        }
         mAgent.onFinish();
     }
 
