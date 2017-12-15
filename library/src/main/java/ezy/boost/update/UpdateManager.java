@@ -69,7 +69,6 @@ public class UpdateManager {
         private boolean mIsWifiOnly;
         private int mNotifyId = 0;
 
-        private OnDownloadListener mOnNotificationDownloadListener;
         private OnDownloadListener mOnDownloadListener;
         private IUpdatePrompter mPrompter;
         private OnFailureListener mOnFailureListener;
@@ -128,11 +127,6 @@ public class UpdateManager {
             return this;
         }
 
-        public Builder setOnNotificationDownloadListener(@NonNull OnDownloadListener listener) {
-            mOnNotificationDownloadListener = listener;
-            return this;
-        }
-
         public Builder setOnDownloadListener(@NonNull OnDownloadListener listener) {
             mOnDownloadListener = listener;
             return this;
@@ -157,9 +151,6 @@ public class UpdateManager {
             }
 
             UpdateAgent agent = new UpdateAgent(mContext, mUrl, mIsManual, mIsWifiOnly, mNotifyId);
-            if (mOnNotificationDownloadListener != null) {
-                agent.setOnNotificationDownloadListener(mOnNotificationDownloadListener);
-            }
             if (mOnDownloadListener != null) {
                 agent.setOnDownloadListener(mOnDownloadListener);
             }

@@ -18,6 +18,8 @@ package ezy.boost.update;
 
 public interface OnDownloadListener {
 
+    void setInfo(UpdateInfo info);
+
     void onStart();
 
     void onProgress(int progress);

@@ -19,9 +19,11 @@ package ezy.boost.update;
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.NotificationCompat;
 import android.text.format.Formatter;
@@ -50,7 +52,10 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
 
     private OnFailureListener mOnFailureListener;
 
+    // 预先下载的缓存APK且未经过确认，需要获取确认
+    private boolean mPreDownloadedNotPrompt = true;
     private OnDownloadListener mOnDownloadListener;
+    private OnDownloadListener mOnDialogDownloadListener;
     private OnDownloadListener mOnNotificationDownloadListener;
 
     public UpdateAgent(Context context, String url, boolean isManual, boolean isWifiOnly, int notifyId) {
@@ -61,7 +66,7 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
         mDownloader = new DefaultUpdateDownloader(mContext);
         mPrompter = new DefaultUpdatePrompter(context);
         mOnFailureListener = new DefaultFailureListener(context);
-        mOnDownloadListener = new DefaultDialogDownloadListener(context);
+        mOnDialogDownloadListener = new DefaultDialogDownloadListener(context);
         if (notifyId > 0) {
             mOnNotificationDownloadListener = new DefaultNotificationDownloadListener(mContext, notifyId);
         } else {
@@ -84,10 +89,6 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
 
     public void setPrompter(IUpdatePrompter prompter) {
         mPrompter = prompter;
-    }
-
-    public void setOnNotificationDownloadListener(OnDownloadListener listener) {
-        mOnNotificationDownloadListener = listener;
     }
 
     public void setOnDownloadListener(OnDownloadListener listener) {
@@ -143,38 +144,51 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
 
     @Override
     public void onStart() {
-        if (mInfo.isSilent) {
-            mOnNotificationDownloadListener.onStart();
+        if (mInfo.isForce) {
+            mOnDialogDownloadListener.onStart();
+        } else if (mInfo.isSilent | mInfo.selfHandleDownloadPrompt) {
+            if (mOnDownloadListener != null) {
+                mOnDownloadListener.onStart();
+            }
         } else {
-            mOnDownloadListener.onStart();
+            mOnNotificationDownloadListener.onStart();
         }
     }
 
     @Override
     public void onProgress(int progress) {
-        if (mInfo.isSilent) {
-            mOnNotificationDownloadListener.onProgress(progress);
+        if (mInfo.isForce) {
+            mOnDialogDownloadListener.onProgress(progress);
+        } else if (mInfo.isSilent | mInfo.selfHandleDownloadPrompt) {
+            if (mOnDownloadListener != null) {
+                mOnDownloadListener.onProgress(progress);
+            }
         } else {
-            mOnDownloadListener.onProgress(progress);
+            mOnNotificationDownloadListener.onProgress(progress);
         }
     }
 
     @Override
     public void onFinish() {
-        if (mInfo.isSilent) {
-            mOnNotificationDownloadListener.onFinish();
-        } else {
-            mOnDownloadListener.onFinish();
-        }
         if (mError != null) {
             mOnFailureListener.onFailure(mError);
         } else {
             mTmpFile.renameTo(mApkFile);
-            if (mInfo.isAutoInstall) {
-                doInstall();
-            }
         }
 
+        if (mInfo.isForce) {
+            mOnDialogDownloadListener.onFinish();
+        } else if (mInfo.isSilent | mInfo.selfHandleDownloadPrompt) {
+            if (mOnDownloadListener != null) {
+                mOnDownloadListener.onFinish();
+            }
+        } else {
+            mOnNotificationDownloadListener.onFinish();
+        }
+
+        if (mError == null && mInfo.isAutoInstall) {
+            doInstall();
+        }
     }
 
 
@@ -224,8 +238,19 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
                 mTmpFile = new File(mContext.getExternalCacheDir(), info.md5);
                 mApkFile = new File(mContext.getExternalCacheDir(), info.md5 + ".apk");
 
+                if (mOnDownloadListener != null) {
+                    mOnDownloadListener.setInfo(mInfo);
+                }
+                mOnDialogDownloadListener.setInfo(mInfo);
+                mOnNotificationDownloadListener.setInfo(mInfo);
+
                 if (UpdateUtil.verify(mApkFile, mInfo.md5, mInfo.isMD5Ignorable)) {
-                    doInstall();
+                    if (mPreDownloadedNotPrompt) { // 预先缓存，先提示再进入安装
+                        mPreDownloadedNotPrompt = false;
+                        doPrompt();
+                    } else { // 刚刚下载，直接进入安装
+                        doInstall();
+                    }
                 } else if (info.isSilent) {
                     doDownload();
                 } else {
@@ -240,6 +265,7 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
     }
 
     void doDownload() {
+        mPreDownloadedNotPrompt = false;
         mDownloader.download(this, mInfo.url, mTmpFile);
     }
 
@@ -343,8 +369,15 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
         private Context mContext;
         private ProgressDialog mDialog;
 
+        private UpdateInfo mUpdateInfo;
+
         public DefaultDialogDownloadListener(Context context) {
             mContext = context;
+        }
+
+        @Override
+        public void setInfo(UpdateInfo info) {
+            mUpdateInfo = info;
         }
 
         @Override
@@ -372,6 +405,10 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
             if (mDialog != null) {
                 mDialog.dismiss();
                 mDialog = null;
+                File apkFile = new File(mContext.getExternalCacheDir(), mUpdateInfo.md5 + ".apk");
+                if (apkFile.exists()) {
+                    UpdateUtil.install(mContext, apkFile, true);
+                }
             }
         }
     }
@@ -381,9 +418,16 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
         private int mNotifyId;
         private NotificationCompat.Builder mBuilder;
 
+        private UpdateInfo mUpdateInfo;
+
         public DefaultNotificationDownloadListener(Context context, int notifyId) {
             mContext = context;
             mNotifyId = notifyId;
+        }
+
+        @Override
+        public void setInfo(UpdateInfo info) {
+            mUpdateInfo = info;
         }
 
         @Override
@@ -418,8 +462,29 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
 
         @Override
         public void onFinish() {
+            Intent intentClick = new Intent(mContext, DownloadNotificationReceiver.class);
+            intentClick.setAction(DownloadNotificationReceiver.ACTION_CLICKED);
+            intentClick.putExtra(DownloadNotificationReceiver.NOTIFICATION_ID, mNotifyId);
+            intentClick.putExtra(DownloadNotificationReceiver.DOWNLOADED_APK_MD5, mUpdateInfo.md5);
+            PendingIntent pendingIntentClick = PendingIntent.getBroadcast(mContext, 0, intentClick, PendingIntent.FLAG_ONE_SHOT);
+
+            Intent intentCancel = new Intent(mContext, DownloadNotificationReceiver.class);
+            intentCancel.setAction(DownloadNotificationReceiver.ACTION_CANCELED);
+            intentCancel.putExtra(DownloadNotificationReceiver.NOTIFICATION_ID, mNotifyId);
+            PendingIntent pendingIntentCancel = PendingIntent.getBroadcast(mContext, 0, intentCancel, PendingIntent.FLAG_ONE_SHOT);
+
+            mBuilder.setProgress(100, 100, false)
+                    .setContentTitle("更新下载完成").setContentText("点击即可开始安装")
+                    .setContentIntent(pendingIntentClick)
+                    .setDeleteIntent(pendingIntentCancel);
+
             NotificationManager nm = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
-            nm.cancel(mNotifyId);
+            nm.notify(mNotifyId, mBuilder.build());
+
+//            // update with other way
+//            File apkFile = new File(mContext.getExternalCacheDir(), mUpdateInfo.md5 + ".apk");
+//            UpdateUtil.install(mContext, apkFile, true);
+//            Toast.makeText(mContext,"安装包下载完毕，请在通知栏处点击安装!",Toast.LENGTH_SHORT).show();
         }
     }
 }

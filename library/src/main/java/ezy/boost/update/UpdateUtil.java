@@ -131,10 +131,6 @@ public class UpdateUtil {
     }
 
     public static boolean verify(File apk, String md5, boolean isIgnorable) {
-        if (isIgnorable) {
-            return true;
-        }
-
         if (!apk.exists()) {
             return false;
         }

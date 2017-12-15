@@ -18,6 +18,11 @@ package ezy.boost.update;
 
 public class DefaultDownloadListener implements OnDownloadListener {
     @Override
+    public void setInfo(UpdateInfo info) {
+
+    }
+
+    @Override
     public void onStart() {
 
     }
