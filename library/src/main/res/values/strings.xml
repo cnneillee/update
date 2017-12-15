@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="toast_error_apk_file_not_exit">APK文件不存在</string>
+    <string name="toast_remove_notification_after_downloaded">该版本APK下载已完成，下次可免流量更新!</string>
+    <string name="toast_apk_downloaded_in_notify">安装包下载完毕，请在通知栏处点击安装!</string>
+    <!--Update - 新版本下载中-->
+    <string name="notify_downloading_title_suffix"> - 新版本下载中</string>
+    <string name="notify_downloaded_title">更新下载完成</string>
+    <string name="notify_downloaded_text">点击即可开始安装</string>
+    <string name="dialog_downloading">下载中…</string>
+</resources>

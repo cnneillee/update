@@ -385,7 +385,7 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
             if (mContext instanceof Activity && !((Activity) mContext).isFinishing()) {
                 ProgressDialog dialog = new ProgressDialog(mContext);
                 dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                dialog.setMessage("下载中...");
+                dialog.setMessage(mContext.getString(R.string.dialog_downloading));
                 dialog.setIndeterminate(false);
                 dialog.setCancelable(false);
                 dialog.show();
@@ -433,7 +433,8 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
         @Override
         public void onStart() {
             if (mBuilder == null) {
-                String title = "下载中 - " + mContext.getString(mContext.getApplicationInfo().labelRes);
+                String titleSuffix = mContext.getString(R.string.notify_downloading_title_suffix);
+                String title = mContext.getString(mContext.getApplicationInfo().labelRes) + titleSuffix;
                 mBuilder = new NotificationCompat.Builder(mContext);
                 mBuilder.setOngoing(true)
                         .setAutoCancel(false)
@@ -474,17 +475,18 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
             PendingIntent pendingIntentCancel = PendingIntent.getBroadcast(mContext, 0, intentCancel, PendingIntent.FLAG_ONE_SHOT);
 
             mBuilder.setProgress(100, 100, false)
-                    .setContentTitle("更新下载完成").setContentText("点击即可开始安装")
+                    .setContentTitle(mContext.getString(R.string.notify_downloaded_title))
+                    .setContentText(mContext.getString(R.string.notify_downloaded_text))
                     .setContentIntent(pendingIntentClick)
                     .setDeleteIntent(pendingIntentCancel);
 
             NotificationManager nm = (NotificationManager) mContext.getSystemService(Context.NOTIFICATION_SERVICE);
             nm.notify(mNotifyId, mBuilder.build());
+            Toast.makeText(mContext, R.string.toast_apk_downloaded_in_notify, Toast.LENGTH_SHORT).show();
 
 //            // update with other way
 //            File apkFile = new File(mContext.getExternalCacheDir(), mUpdateInfo.md5 + ".apk");
 //            UpdateUtil.install(mContext, apkFile, true);
-//            Toast.makeText(mContext,"安装包下载完毕，请在通知栏处点击安装!",Toast.LENGTH_SHORT).show();
         }
     }
 }

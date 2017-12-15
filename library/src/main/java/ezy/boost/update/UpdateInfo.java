@@ -24,7 +24,7 @@ public class UpdateInfo {
     public boolean hasUpdate = false;
     // 是否静默下载：有新版本时不提示直接下载
     public boolean isSilent = false;
-    // 自己处理
+    // 用户使用自设置的OnDownloadListener处理下载过程监听
     public boolean selfHandleDownloadPrompt = false;
     // 是否强制安装：不安装无法使用app
     public boolean isForce = false;

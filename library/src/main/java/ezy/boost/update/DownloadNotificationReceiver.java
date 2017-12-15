@@ -41,13 +41,13 @@ public class DownloadNotificationReceiver extends BroadcastReceiver {
             if (apkFile.exists()) {
                 UpdateUtil.install(context, apkFile, true);
             } else {
-                Toast.makeText(context, "CHECK FILE ERROR", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, R.string.toast_error_apk_file_not_exit, Toast.LENGTH_SHORT).show();
             }
         }
 
         if (ACTION_CANCELED.equals(action)) {
             // 处理滑动清除和点击删除事件
-            Toast.makeText(context, "本次下载已缓存，下次更新同版本将免流量更新!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, R.string.toast_remove_notification_after_downloaded, Toast.LENGTH_SHORT).show();
         }
     }
 }
