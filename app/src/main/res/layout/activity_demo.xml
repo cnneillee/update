@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingTop="20dp">
+
+    <Button
+        android:id="@+id/btn_normal"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="正常更新(Normal)" />
+
+    <Button
+        android:id="@+id/btn_force"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="强制更新(Force)" />
+
+    <Button
+        android:id="@+id/btn_silent"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="静默更新(Silent)" />
+
+    <Button
+        android:id="@+id/btn_clear_cache"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:text="清除缓存" />
+</LinearLayout>

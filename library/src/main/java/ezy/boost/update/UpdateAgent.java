@@ -230,6 +230,7 @@ class UpdateAgent implements ICheckAgent, IUpdateAgent, IDownloadAgent {
             } else if (!info.hasUpdate) {
                 doFailure(new UpdateError(UpdateError.UPDATE_NO_NEWER));
             } else if (UpdateUtil.isIgnore(mContext, info.md5)) {
+                //TODO 忽略策略抽取 根据MD5比较，判断该版本是否需要被忽略，
                 doFailure(new UpdateError(UpdateError.UPDATE_IGNORED));
             } else {
                 UpdateUtil.log("update md5" + mInfo.md5);

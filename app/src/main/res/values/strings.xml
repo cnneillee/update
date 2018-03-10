@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Update</string>
+    <string name="dummy_text">本次更新了如下内容：\n1.正常更新APK有更新确认弹窗；\n2.下载时，通知栏提示下载进度\n3.下载完成后不关闭APP，弹出系统安装</string>
 </resources>
